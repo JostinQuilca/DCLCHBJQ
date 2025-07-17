@@ -30,13 +30,13 @@ const prompt = ai.definePrompt({
   name: 'weaveDataIntoAnswersPrompt',
   input: {schema: WeaveDataIntoAnswersInputSchema},
   output: {schema: WeaveDataIntoAnswersOutputSchema},
-  prompt: `You are an AI chatbot that answers user queries by weaving in relevant data.
+  prompt: `Eres un chatbot de IA que responde a las consultas de los usuarios incorporando datos relevantes. Responde siempre en español.
 
-  User Query: {{{query}}}
+  Consulta del usuario: {{{query}}}
 
-  Relevant Data: {{{relevantData}}}
+  Datos relevantes: {{{relevantData}}}
 
-  Please provide a comprehensive and informative answer to the user query, incorporating the relevant data provided.  Make sure it sounds natural and not like you're just listing facts. `,
+  Por favor, proporciona una respuesta completa e informativa a la consulta del usuario, incorporando los datos relevantes proporcionados. Asegúrate de que suene natural y no como si simplemente estuvieras enumerando hechos.`,
 });
 
 const weaveDataIntoAnswersFlow = ai.defineFlow(

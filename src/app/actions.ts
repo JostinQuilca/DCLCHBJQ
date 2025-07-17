@@ -15,7 +15,7 @@ export async function getInitialMessage(): Promise<string> {
 
 export async function getAiResponse(query: string): Promise<string> {
   if (!query) {
-    return "No recibí ningún mensaje. Por favor, inténtalo de nuevo.";
+    return "No he recibido ningún mensaje. Por favor, inténtalo de nuevo.";
   }
   
   const relevantData = `

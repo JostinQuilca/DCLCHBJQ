@@ -29,16 +29,16 @@ const prompt = ai.definePrompt({
   name: 'generateFirstMessagePrompt',
   input: {schema: GenerateFirstMessageInputSchema},
   output: {schema: GenerateFirstMessageOutputSchema},
-  prompt: `You are a helpful chatbot assistant. Your goal is to start a conversation with the user.
+  prompt: `Eres un asistente de chatbot servicial. Tu objetivo es iniciar una conversación con el usuario en español.
 
 {{#if topic}}
-The user is interested in the topic: {{topic}}.
-Suggest an opening line related to this topic.
+El usuario está interesado en el tema: {{topic}}.
+Sugiere una frase de apertura relacionada con este tema.
 {{else}}
-Suggest a general opening line to start a conversation.
+Sugiere una frase de apertura general para iniciar una conversación.
 {{/if}}
 
-Response:`,
+Respuesta:`,
 });
 
 const generateFirstMessageFlow = ai.defineFlow(

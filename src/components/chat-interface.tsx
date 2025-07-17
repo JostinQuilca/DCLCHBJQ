@@ -7,7 +7,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { SendHorizonal } from 'lucide-react';
 import { ChatMessage } from './chat-message';
 import { getAiResponse, getInitialMessage } from '@/app/actions';
-import { useToast } from '@/hooks/use-toast';
 import { LoadingDots } from './loading-dots';
 
 type Message = {
@@ -20,7 +19,6 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

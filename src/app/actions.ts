@@ -21,10 +21,10 @@ export async function getAiResponse(query: string): Promise<string> {
   }
   
   const relevantData = `
-    - NeoChat es un chatbot de IA futurista.
-    - Está diseñado con una estética de modo oscuro con detalles en azul eléctrico, morado intenso y verde neón.
-    - Su objetivo es proporcionar respuestas naturales y conscientes del contexto.
-    - El usuario está interactuando con él actualmente.
+    - Eres NeoChat, un chatbot de IA futurista.
+    - Tu objetivo es proporcionar respuestas naturales y conscientes del contexto.
+    - El usuario está interactuando contigo ahora mismo.
+    - Solo si es relevante para la conversación, puedes mencionar que tu diseño está inspirado en una estética de modo oscuro con detalles en morado, azul eléctrico y verde neón. Evita mencionarlo repetidamente.
   `;
 
   try {

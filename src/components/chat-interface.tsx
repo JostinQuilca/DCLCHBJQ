@@ -7,7 +7,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { SendHorizonal } from 'lucide-react';
 import { ChatMessage } from './chat-message';
 import { getAiResponse, getInitialMessage } from '@/app/actions';
-import { LoadingDots } from './loading-dots';
 
 type Message = {
   id: string;
@@ -15,24 +14,51 @@ type Message = {
   content: string;
 };
 
-export function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([]);
+// Hook para persistir el estado en localStorage
+function usePersistentState<T>(key: string, defaultValue: T): [T, (value: T) => void] {
+  const [state, setState] = useState(() => {
+    try {
+      const storedValue = localStorage.getItem(key);
+      return storedValue ? JSON.parse(storedValue) : defaultValue;
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${key}”:`, error);
+      return defaultValue;
+    }
+  });
+
+  const setPersistentState = (value: T) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      setState(value);
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${key}”:`, error);
+    }
+  };
+
+  return [state, setPersistentState];
+}
+
+export function ChatInterface({ chatId }: { chatId: number }) {
+  const [messages, setMessages] = usePersistentState<Message[]>(`chat_${chatId}_messages`, []);
   const [input, setInput] = useState('');
   const [isPending, startTransition] = useTransition();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    startTransition(async () => {
-      const initialMessage = await getInitialMessage();
-      setMessages([
-        {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: initialMessage,
-        },
-      ]);
-    });
-  }, []);
+    // Solo carga el mensaje inicial si no hay mensajes.
+    if (messages.length === 0) {
+      startTransition(async () => {
+        const initialMessage = await getInitialMessage();
+        setMessages([
+          {
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: initialMessage,
+          },
+        ]);
+      });
+    }
+  }, [chatId]); // se ejecuta cuando cambia el chat
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -54,7 +80,9 @@ export function ChatInterface() {
       role: 'user',
       content: trimmedInput,
     };
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+
 
     startTransition(async () => {
       const response = await getAiResponse(trimmedInput);
@@ -63,7 +91,7 @@ export function ChatInterface() {
         role: 'assistant',
         content: response,
       };
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages([...newMessages, aiMessage]);
     });
   };
 
@@ -74,7 +102,7 @@ export function ChatInterface() {
           {messages.map(msg => (
             <ChatMessage key={msg.id} {...msg} />
           ))}
-          {isPending && messages.length > 0 && (
+          {isPending && messages.length > 0 && messages[messages.length -1].role === 'user' && (
              <div className="flex items-start gap-4">
                 <ChatMessage role="assistant" content="" />
              </div>
@@ -86,7 +114,7 @@ export function ChatInterface() {
           <Textarea
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Type your message..."
+            placeholder="Escribe tu mensaje..."
             className="flex-1 resize-none min-h-[40px] max-h-40"
             rows={1}
             onKeyDown={e => {
@@ -99,7 +127,7 @@ export function ChatInterface() {
           />
           <Button type="submit" size="icon" disabled={!input.trim() || isPending} className="bg-accent hover:bg-accent/90 text-accent-foreground">
             <SendHorizonal />
-            <span className="sr-only">Send</span>
+            <span className="sr-only">Enviar</span>
           </Button>
         </form>
       </div>

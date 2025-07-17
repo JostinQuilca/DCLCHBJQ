@@ -4,6 +4,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, BrainCircuit, PanelLeft, MessageSquare } from 'lucide-react';
 import { ChatInterface } from '@/components/chat-interface';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type Chat = {
   id: number;
@@ -21,20 +27,32 @@ export default function Home() {
     setIsClient(true);
     try {
       const storedChats = localStorage.getItem('chats');
-      if (storedChats) {
-        setChats(JSON.parse(storedChats));
-      } else {
-        // If no chats, create one
-        newChat();
-      }
       const storedActiveChat = localStorage.getItem('activeChatId');
-      if (storedActiveChat) {
-        setActiveChatId(JSON.parse(storedActiveChat));
+      
+      let parsedChats: Chat[] = [];
+      if (storedChats) {
+        parsedChats = JSON.parse(storedChats);
+        setChats(parsedChats);
       }
+      
+      let activeId: number | null = null;
+      if (storedActiveChat) {
+        activeId = JSON.parse(storedActiveChat);
+        setActiveChatId(activeId);
+      }
+
+      if (parsedChats.length === 0) {
+        // If no chats, create one and set it as active
+        newChat(true);
+      } else if (activeId === null) {
+        // If chats exist but none is active, activate the first one
+        setActiveChatId(parsedChats[0].id);
+      }
+
     } catch (error) {
       console.warn('Error reading from localStorage:', error);
       // If error, start with a fresh chat
-      if(chats.length === 0) newChat();
+      if(chats.length === 0) newChat(true);
     }
   }, []);
 
@@ -53,11 +71,14 @@ export default function Home() {
   }, [chats, activeChatId, isClient]);
 
 
-  const newChat = () => {
+  const newChat = (setActive = false) => {
     const newId = chats.length > 0 ? Math.max(...chats.map(c => c.id)) + 1 : 1;
     const newChat: Chat = { id: newId, title: 'Nuevo Chat' };
-    setChats(prev => [...prev, newChat]);
-    setActiveChatId(newId);
+    const newChats = [...chats, newChat];
+    setChats(newChats);
+    if (setActive || activeChatId === null) {
+      setActiveChatId(newId);
+    }
   };
   
   const updateChatTitle = useCallback((chatId: number, newTitle: string) => {
@@ -74,7 +95,7 @@ export default function Home() {
     // Render a skeleton or loading state on the server
     return (
       <div className="flex h-dvh bg-background text-foreground font-body">
-        <aside className="w-64 flex flex-col p-4 bg-card border-r border-border space-y-4">
+        <aside className="w-64 flex-shrink-0 flex flex-col p-4 bg-card border-r border-border space-y-4">
           <header className="px-2">
             <h1 className="text-2xl font-bold font-headline text-primary flex items-center gap-2">
               <BrainCircuit size={28} />
@@ -88,49 +109,68 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-dvh bg-background text-foreground font-body">
-      <aside className={`flex flex-col p-4 bg-card border-r border-border space-y-4 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-0 p-0 overflow-hidden'}`}>
-        <header className="px-2">
-          <h1 className="text-2xl font-bold font-headline text-primary flex items-center gap-2">
-            <BrainCircuit size={28} />
-            <span>NeoChat</span>
-          </h1>
-        </header>
-        <div className="flex-1 space-y-2">
-          {chats.map(chat => (
+    <TooltipProvider delayDuration={0}>
+      <div className="flex h-dvh bg-background text-foreground font-body">
+        <aside className={`flex flex-col flex-shrink-0 bg-card border-r border-border space-y-4 transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64 p-4' : 'w-20 p-2 items-center'}`}>
+          <header className={`px-2 ${sidebarOpen ? '' : 'flex justify-center'}`}>
+            <h1 className="text-2xl font-bold font-headline text-primary flex items-center gap-2">
+              <BrainCircuit size={28} />
+              <span className={`${sidebarOpen ? 'block' : 'hidden'}`}>NeoChat</span>
+            </h1>
+          </header>
+          <div className="flex-1 space-y-2 w-full">
+            {chats.map(chat => (
+              <Tooltip key={chat.id}>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setActiveChatId(chat.id)}
+                    variant={activeChatId === chat.id ? 'secondary' : 'ghost'}
+                    className={`w-full justify-start text-left truncate ${!sidebarOpen && 'justify-center'}`}
+                  >
+                    <MessageSquare className={`h-5 w-5 flex-shrink-0 ${sidebarOpen && 'mr-2'}`} />
+                    <span className={`truncate ${sidebarOpen ? 'inline' : 'hidden'}`}>{chat.title}</span>
+                  </Button>
+                </TooltipTrigger>
+                {!sidebarOpen && (
+                   <TooltipContent side="right" align="center">
+                    <p>{chat.title}</p>
+                   </TooltipContent>
+                )}
+              </Tooltip>
+            ))}
+          </div>
+           <Tooltip>
+             <TooltipTrigger asChild>
+                <Button
+                  onClick={() => newChat(true)}
+                  variant="outline"
+                  className={`w-full ${!sidebarOpen && 'justify-center'}`}
+                >
+                  <Plus className={`h-4 w-4 ${sidebarOpen && 'mr-2'}`} />
+                  <span className={`${sidebarOpen ? 'inline' : 'hidden'}`}>Nuevo Chat</span>
+                </Button>
+             </TooltipTrigger>
+             {!sidebarOpen && (
+                <TooltipContent side="right" align="center">
+                  <p>Nuevo Chat</p>
+                </TooltipContent>
+             )}
+            </Tooltip>
+        </aside>
+        <main className="flex-1 flex flex-col">
+          <header className="flex items-center p-2 border-b border-border">
             <Button
-              key={chat.id}
-              onClick={() => setActiveChatId(chat.id)}
-              variant={activeChatId === chat.id ? 'secondary' : 'ghost'}
-              className="w-full justify-start text-left truncate"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              variant="ghost"
+              size="icon"
             >
-              <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{chat.title}</span>
+              <PanelLeft />
+              <span className="sr-only">Ocultar barra lateral</span>
             </Button>
-          ))}
-        </div>
-        <Button
-          onClick={newChat}
-          variant="outline"
-          className="w-full"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Nuevo Chat
-        </Button>
-      </aside>
-      <main className="flex-1 flex flex-col">
-        <header className="flex items-center p-2 border-b border-border">
-          <Button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            variant="ghost"
-            size="icon"
-          >
-            <PanelLeft />
-            <span className="sr-only">Ocultar barra lateral</span>
-          </Button>
-        </header>
-        {activeChat && <ChatInterface key={activeChat.id} chatId={activeChat.id} onTitleUpdate={updateChatTitle} />}
-      </main>
-    </div>
+          </header>
+          {activeChat && <ChatInterface key={activeChat.id} chatId={activeChat.id} onTitleUpdate={updateChatTitle} />}
+        </main>
+      </div>
+    </TooltipProvider>
   );
 }

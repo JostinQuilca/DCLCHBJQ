@@ -1,10 +1,18 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
+import type { Metadata } from "next";
+import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'NeoChat',
-  description: 'Una aplicación de chatbot interactiva con IA.',
+  title: "NeoChat",
+  description: "Una aplicación de chatbot interactiva con IA.",
+  icons: {
+    icon: `data:image/svg+xml;base64,${btoa(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <rect width="100" height="100" rx="20" fill="hsl(227 11% 16%)"></rect>
+        <path d="M 30 50 L 50 25 L 50 42 L 70 42 L 45 75 L 45 58 L 30 58 L 30 50" fill="hsl(263 88% 78%)"></path>
+      </svg>
+    `)}`,
+  },
 };
 
 export default function RootLayout({

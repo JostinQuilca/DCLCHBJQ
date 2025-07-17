@@ -14,6 +14,9 @@ import {z} from 'genkit';
 const WeaveDataIntoAnswersInputSchema = z.object({
   query: z.string().describe('The user query.'),
   relevantData: z.string().describe('Pieces of relevant data to weave into the answer.'),
+  photoDataUri: z.string().optional().describe(
+    "A photo from the user, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+  ),
 });
 export type WeaveDataIntoAnswersInput = z.infer<typeof WeaveDataIntoAnswersInputSchema>;
 
@@ -30,13 +33,18 @@ const prompt = ai.definePrompt({
   name: 'weaveDataIntoAnswersPrompt',
   input: {schema: WeaveDataIntoAnswersInputSchema},
   output: {schema: WeaveDataIntoAnswersOutputSchema},
-  prompt: `Eres un chatbot de IA que responde a las consultas de los usuarios incorporando datos relevantes. Responde siempre en español.
+  prompt: `Eres un chatbot de IA que responde a las consultas de los usuarios incorporando datos relevantes y analizando imágenes si se proporcionan. Responde siempre en español.
 
   Consulta del usuario: {{{query}}}
+  
+  {{#if photoDataUri}}
+  El usuario ha proporcionado esta imagen para que la analices:
+  {{media url=photoDataUri}}
+  {{/if}}
 
-  Datos relevantes: {{{relevantData}}}
+  Datos relevantes sobre ti: {{{relevantData}}}
 
-  Por favor, proporciona una respuesta completa e informativa a la consulta del usuario, incorporando los datos relevantes proporcionados. Asegúrate de que suene natural y no como si simplemente estuvieras enumerando hechos.`,
+  Por favor, proporciona una respuesta completa e informativa a la consulta del usuario, incorporando los datos relevantes proporcionados y cualquier información de la imagen. Asegúrate de que suene natural y no como si simplemente estuvieras enumerando hechos.`,
 });
 
 const weaveDataIntoAnswersFlow = ai.defineFlow(

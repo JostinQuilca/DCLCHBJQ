@@ -4,13 +4,15 @@ import { Bot, User } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { LoadingDots } from './loading-dots';
+import Image from 'next/image';
 
 type ChatMessageProps = {
   role: 'user' | 'assistant';
   content: string;
+  image?: string;
 };
 
-export function ChatMessage({ role, content }: ChatMessageProps) {
+export function ChatMessage({ role, content, image }: ChatMessageProps) {
   const isUser = role === 'user';
   const isLoading = role === 'assistant' && content === '';
 
@@ -30,16 +32,21 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
       )}
       <div
         className={cn(
-          'rounded-lg p-3 max-w-sm md:max-w-md lg:max-w-2xl text-sm',
+          'rounded-lg p-3 max-w-sm md:max-w-md lg:max-w-2xl text-sm flex flex-col gap-2',
           isUser
             ? 'bg-primary text-primary-foreground'
             : 'bg-card'
         )}
       >
+        {image && (
+          <div className="relative w-full aspect-video rounded-md overflow-hidden">
+             <Image src={image} alt="Imagen adjunta por el usuario" layout="fill" objectFit="cover" />
+          </div>
+        )}
         {isLoading ? (
           <LoadingDots />
         ) : (
-          <p className="whitespace-pre-wrap">{content}</p>
+          content && <p className="whitespace-pre-wrap">{content}</p>
         )}
       </div>
       {isUser && (

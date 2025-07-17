@@ -15,9 +15,9 @@ export async function getInitialMessage(): Promise<string> {
   }
 }
 
-export async function getAiResponse(query: string): Promise<string> {
-  if (!query) {
-    return "No he recibido ningún mensaje. Por favor, inténtalo de nuevo.";
+export async function getAiResponse(query: string, photoDataUri?: string): Promise<string> {
+  if (!query && !photoDataUri) {
+    return "No he recibido ningún mensaje o imagen. Por favor, inténtalo de nuevo.";
   }
   
   const relevantData = `
@@ -28,7 +28,7 @@ export async function getAiResponse(query: string): Promise<string> {
   `;
 
   try {
-    const { answer } = await weaveDataIntoAnswers({ query, relevantData });
+    const { answer } = await weaveDataIntoAnswers({ query, relevantData, photoDataUri });
     return answer;
   } catch (error) {
     console.error('Error al obtener la respuesta de la IA:', error);

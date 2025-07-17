@@ -25,8 +25,8 @@ export function ChatMessage({ role, content, image, fileName }: ChatMessageProps
       )}
     >
       {!isUser && (
-        <Avatar className="h-8 w-8 bg-accent text-accent-foreground flex-shrink-0">
-          <AvatarFallback>
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarFallback className="bg-accent text-accent-foreground">
             <Bot />
           </AvatarFallback>
         </Avatar>

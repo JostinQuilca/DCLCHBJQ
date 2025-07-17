@@ -2,6 +2,8 @@
 
 import { generateFirstMessage } from '@/ai/flows/generate-first-message';
 import { weaveDataIntoAnswers } from '@/ai/flows/weave-data-into-answers';
+import { generateChatTitle as generateTitle } from '@/ai/flows/generate-chat-title';
+
 
 export async function getInitialMessage(): Promise<string> {
   try {
@@ -31,5 +33,16 @@ export async function getAiResponse(query: string): Promise<string> {
   } catch (error) {
     console.error('Error al obtener la respuesta de la IA:', error);
     return 'Lo siento, algo salió mal de mi lado. Por favor, inténtalo de nuevo en un momento.';
+  }
+}
+
+export async function generateChatTitle(message: string): Promise<string> {
+  try {
+    const { title } = await generateTitle({ message });
+    return title;
+  } catch (error) {
+    console.error('Error al generar el título del chat:', error);
+    // Fallback title
+    return 'Nuevo Chat';
   }
 }

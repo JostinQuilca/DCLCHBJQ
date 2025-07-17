@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, FormEvent, useTransition } from 'react';
+import { useEffect, useRef, useState, FormEvent, useTransition, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SendHorizonal } from 'lucide-react';
 import { ChatMessage } from './chat-message';
-import { getAiResponse, getInitialMessage } from '@/app/actions';
+import { getAiResponse, getInitialMessage, generateChatTitle } from '@/app/actions';
 
 type Message = {
   id: string;
@@ -14,7 +14,13 @@ type Message = {
   content: string;
 };
 
-export function ChatInterface({ chatId }: { chatId: number }) {
+type ChatInterfaceProps = {
+  chatId: number;
+  onTitleUpdate: (chatId: number, newTitle: string) => void;
+};
+
+
+export function ChatInterface({ chatId, onTitleUpdate }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [input, setInput] = useState('');
@@ -22,8 +28,17 @@ export function ChatInterface({ chatId }: { chatId: number }) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesKey = `chat_${chatId}_messages`;
 
+  const setPersistentMessages = useCallback((newMessages: Message[]) => {
+    try {
+      localStorage.setItem(messagesKey, JSON.stringify(newMessages));
+      setMessages(newMessages);
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${messagesKey}”:`, error);
+    }
+  }, [messagesKey]);
+  
   useEffect(() => {
-    // Cargar mensajes desde localStorage solo en el cliente
+    let isMounted = true;
     try {
       const storedValue = localStorage.getItem(messagesKey);
       const initialMessages = storedValue ? JSON.parse(storedValue) : [];
@@ -36,9 +51,10 @@ export function ChatInterface({ chatId }: { chatId: number }) {
             role: 'assistant',
             content: initialMessageContent,
           };
-          setMessages([firstMessage]);
-          localStorage.setItem(messagesKey, JSON.stringify([firstMessage]));
-          setIsInitialized(true);
+          if (isMounted) {
+            setPersistentMessages([firstMessage]);
+            setIsInitialized(true);
+          }
         });
       } else {
         setMessages(initialMessages);
@@ -46,18 +62,11 @@ export function ChatInterface({ chatId }: { chatId: number }) {
       }
     } catch (error) {
       console.warn(`Error reading localStorage key “${messagesKey}”:`, error);
-      setIsInitialized(true); // Ensure we don't get stuck
+      setIsInitialized(true); 
     }
-  }, [chatId, messagesKey]); 
+    return () => { isMounted = false; };
+  }, [chatId, messagesKey, setPersistentMessages]); 
 
-  const setPersistentMessages = (newMessages: Message[]) => {
-    try {
-      localStorage.setItem(messagesKey, JSON.stringify(newMessages));
-      setMessages(newMessages);
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${messagesKey}”:`, error);
-    }
-  };
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -79,11 +88,19 @@ export function ChatInterface({ chatId }: { chatId: number }) {
       role: 'user',
       content: trimmedInput,
     };
+
+    const isFirstUserMessage = messages.filter(m => m.role === 'user').length === 0;
+
     const newMessages = [...messages, userMessage];
     setPersistentMessages(newMessages);
 
 
     startTransition(async () => {
+      if (isFirstUserMessage) {
+        const newTitle = await generateChatTitle(trimmedInput);
+        onTitleUpdate(chatId, newTitle);
+      }
+
       const response = await getAiResponse(trimmedInput);
       const aiMessage: Message = {
         id: crypto.randomUUID(),

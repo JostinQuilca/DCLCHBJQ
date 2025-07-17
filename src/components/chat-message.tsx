@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, User } from 'lucide-react';
+import { Bot, User, Paperclip } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { LoadingDots } from './loading-dots';
@@ -10,9 +10,10 @@ type ChatMessageProps = {
   role: 'user' | 'assistant';
   content: string;
   image?: string;
+  fileName?: string;
 };
 
-export function ChatMessage({ role, content, image }: ChatMessageProps) {
+export function ChatMessage({ role, content, image, fileName }: ChatMessageProps) {
   const isUser = role === 'user';
   const isLoading = role === 'assistant' && content === '';
 
@@ -41,6 +42,12 @@ export function ChatMessage({ role, content, image }: ChatMessageProps) {
         {image && (
           <div className="relative w-full aspect-video rounded-md overflow-hidden">
              <Image src={image} alt="Imagen adjunta por el usuario" layout="fill" objectFit="cover" />
+          </div>
+        )}
+         {fileName && (
+          <div className="flex items-center gap-2 p-2 rounded-md bg-primary/20 text-sm">
+            <Paperclip className="h-4 w-4" />
+            <span>{fileName}</span>
           </div>
         )}
         {isLoading ? (

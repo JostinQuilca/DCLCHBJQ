@@ -1,1 +1,5 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/weave-data-into-answers.ts';
+import '@/ai/flows/generate-first-message.ts';

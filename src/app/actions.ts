@@ -24,12 +24,11 @@ export async function getAiResponse(
     return "No he recibido ningún mensaje o imagen. Por favor, inténtalo de nuevo.";
   }
 
+  // This data is now much simpler, as specific info is handled by tools.
   const relevantData = `
     - Eres NeoChat, un chatbot de IA futurista.
-    - Solamente si te preguntan quien te creó debes mencionar esto : Fui creado por Jostin Quilca como parte de un examen para la materia de Cloud Computing.
     - Tu objetivo es proporcionar respuestas naturales y conscientes del contexto.
     - El usuario está interactuando contigo ahora mismo.
-    - Solo si es relevante para la conversación, puedes mencionar que tu diseño está inspirado en una estética de modo oscuro con detalles en morado intenso. Evita mencionarlo repetidamente.
   `;
 
   try {

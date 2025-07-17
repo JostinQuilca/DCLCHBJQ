@@ -44,9 +44,9 @@ export default function Home() {
       if (parsedChats.length === 0) {
         // If no chats, create one and set it as active
         newChat(true);
-      } else if (activeId === null) {
-        // If chats exist but none is active, activate the first one
-        setActiveChatId(parsedChats[0].id);
+      } else if (activeId === null || !parsedChats.some(c => c.id === activeId)) {
+        // If chats exist but none is active (or active one is invalid), activate the first one
+        setActiveChatId(parsedChats[0]?.id ?? null);
       }
 
     } catch (error) {
@@ -112,13 +112,32 @@ export default function Home() {
     <TooltipProvider delayDuration={0}>
       <div className="flex h-dvh bg-background text-foreground font-body">
         <aside className={`flex flex-col flex-shrink-0 bg-card border-r border-border space-y-4 transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64 p-4' : 'w-20 p-2 items-center'}`}>
-          <header className={`px-2 ${sidebarOpen ? '' : 'flex justify-center'}`}>
-            <h1 className="text-2xl font-bold font-headline text-primary flex items-center gap-2">
-              <BrainCircuit size={28} />
-              <span className={`${sidebarOpen ? 'block' : 'hidden'}`}>NeoChat</span>
-            </h1>
-          </header>
-          <div className="flex-1 space-y-2 w-full">
+          <div className="w-full">
+            <header className={`px-2 mb-4 ${sidebarOpen ? '' : 'flex justify-center'}`}>
+              <h1 className="text-2xl font-bold font-headline text-primary flex items-center gap-2">
+                <BrainCircuit size={28} />
+                <span className={`${sidebarOpen ? 'block' : 'hidden'}`}>NeoChat</span>
+              </h1>
+            </header>
+            <Tooltip>
+               <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => newChat(true)}
+                    variant="outline"
+                    className={`w-full ${!sidebarOpen && 'justify-center'}`}
+                  >
+                    <Plus className={`h-4 w-4 ${sidebarOpen && 'mr-2'}`} />
+                    <span className={`${sidebarOpen ? 'inline' : 'hidden'}`}>Nuevo Chat</span>
+                  </Button>
+               </TooltipTrigger>
+               {!sidebarOpen && (
+                  <TooltipContent side="right" align="center">
+                    <p>Nuevo Chat</p>
+                  </TooltipContent>
+               )}
+            </Tooltip>
+          </div>
+          <div className="flex-1 space-y-2 w-full overflow-y-auto">
             {chats.map(chat => (
               <Tooltip key={chat.id}>
                 <TooltipTrigger asChild>
@@ -139,23 +158,6 @@ export default function Home() {
               </Tooltip>
             ))}
           </div>
-           <Tooltip>
-             <TooltipTrigger asChild>
-                <Button
-                  onClick={() => newChat(true)}
-                  variant="outline"
-                  className={`w-full ${!sidebarOpen && 'justify-center'}`}
-                >
-                  <Plus className={`h-4 w-4 ${sidebarOpen && 'mr-2'}`} />
-                  <span className={`${sidebarOpen ? 'inline' : 'hidden'}`}>Nuevo Chat</span>
-                </Button>
-             </TooltipTrigger>
-             {!sidebarOpen && (
-                <TooltipContent side="right" align="center">
-                  <p>Nuevo Chat</p>
-                </TooltipContent>
-             )}
-            </Tooltip>
         </aside>
         <main className="flex-1 flex flex-col">
           <header className="flex items-center p-2 border-b border-border">

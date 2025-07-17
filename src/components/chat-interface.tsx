@@ -14,51 +14,50 @@ type Message = {
   content: string;
 };
 
-// Hook para persistir el estado en localStorage
-function usePersistentState<T>(key: string, defaultValue: T): [T, (value: T) => void] {
-  const [state, setState] = useState(() => {
-    try {
-      const storedValue = localStorage.getItem(key);
-      return storedValue ? JSON.parse(storedValue) : defaultValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key “${key}”:`, error);
-      return defaultValue;
-    }
-  });
-
-  const setPersistentState = (value: T) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      setState(value);
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${key}”:`, error);
-    }
-  };
-
-  return [state, setPersistentState];
-}
-
 export function ChatInterface({ chatId }: { chatId: number }) {
-  const [messages, setMessages] = usePersistentState<Message[]>(`chat_${chatId}_messages`, []);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [input, setInput] = useState('');
   const [isPending, startTransition] = useTransition();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesKey = `chat_${chatId}_messages`;
 
   useEffect(() => {
-    // Solo carga el mensaje inicial si no hay mensajes.
-    if (messages.length === 0) {
-      startTransition(async () => {
-        const initialMessage = await getInitialMessage();
-        setMessages([
-          {
+    // Cargar mensajes desde localStorage solo en el cliente
+    try {
+      const storedValue = localStorage.getItem(messagesKey);
+      const initialMessages = storedValue ? JSON.parse(storedValue) : [];
+      
+      if (initialMessages.length === 0) {
+        startTransition(async () => {
+          const initialMessageContent = await getInitialMessage();
+          const firstMessage: Message = {
             id: crypto.randomUUID(),
             role: 'assistant',
-            content: initialMessage,
-          },
-        ]);
-      });
+            content: initialMessageContent,
+          };
+          setMessages([firstMessage]);
+          localStorage.setItem(messagesKey, JSON.stringify([firstMessage]));
+          setIsInitialized(true);
+        });
+      } else {
+        setMessages(initialMessages);
+        setIsInitialized(true);
+      }
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${messagesKey}”:`, error);
+      setIsInitialized(true); // Ensure we don't get stuck
     }
-  }, [chatId]); // se ejecuta cuando cambia el chat
+  }, [chatId, messagesKey]); 
+
+  const setPersistentMessages = (newMessages: Message[]) => {
+    try {
+      localStorage.setItem(messagesKey, JSON.stringify(newMessages));
+      setMessages(newMessages);
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${messagesKey}”:`, error);
+    }
+  };
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -72,7 +71,7 @@ export function ChatInterface({ chatId }: { chatId: number }) {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmedInput = input.trim();
-    if (!trimmedInput || isPending) return;
+    if (!trimmedInput || isPending || !isInitialized) return;
 
     setInput('');
     const userMessage: Message = {
@@ -81,7 +80,7 @@ export function ChatInterface({ chatId }: { chatId: number }) {
       content: trimmedInput,
     };
     const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    setPersistentMessages(newMessages);
 
 
     startTransition(async () => {
@@ -91,7 +90,7 @@ export function ChatInterface({ chatId }: { chatId: number }) {
         role: 'assistant',
         content: response,
       };
-      setMessages([...newMessages, aiMessage]);
+      setPersistentMessages([...newMessages, aiMessage]);
     });
   };
 
@@ -99,7 +98,7 @@ export function ChatInterface({ chatId }: { chatId: number }) {
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-1 p-4" viewportRef={scrollAreaRef}>
         <div className="space-y-6">
-          {messages.map(msg => (
+          {isInitialized && messages.map(msg => (
             <ChatMessage key={msg.id} {...msg} />
           ))}
           {isPending && messages.length > 0 && messages[messages.length -1].role === 'user' && (
@@ -123,9 +122,9 @@ export function ChatInterface({ chatId }: { chatId: number }) {
                 handleSubmit(e as any);
               }
             }}
-            disabled={isPending}
+            disabled={isPending || !isInitialized}
           />
-          <Button type="submit" size="icon" disabled={!input.trim() || isPending} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+          <Button type="submit" size="icon" disabled={!input.trim() || isPending || !isInitialized} className="bg-accent hover:bg-accent/90 text-accent-foreground">
             <SendHorizonal />
             <span className="sr-only">Enviar</span>
           </Button>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, BrainCircuit, PanelLeft } from 'lucide-react';
+import { Plus, BrainCircuit, PanelLeft, MessageSquare } from 'lucide-react';
 import { ChatInterface } from '@/components/chat-interface';
 
 type Chat = {
@@ -104,7 +104,8 @@ export default function Home() {
               variant={activeChatId === chat.id ? 'secondary' : 'ghost'}
               className="w-full justify-start text-left truncate"
             >
-              {chat.title}
+              <MessageSquare className="mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{chat.title}</span>
             </Button>
           ))}
         </div>
